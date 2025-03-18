@@ -3,20 +3,26 @@ const { db, saveToDatabase } = require('./helpers/db');
 const generator = require('./helpers/data-generator');
 
 const refId = "ApqQB4zSKodYR5EKgHIqREheezXMWXRY";
-let isRunning = true;
 
+let browser; // Store the browser instance
+
+async function initializeBrowser() {
+    if (!browser) {
+        browser = await puppeteer.launch({ headless: 'new' });
+    }
+}
 
 async function submitForm() {
     try {
-        const browser = await puppeteer.launch({ headless: 'new' }); // Run in headless mode
+        await initializeBrowser(); // Ensure browser is running
+
         const page = await browser.newPage();
 
         // Capture AJAX responses
         page.on('response', async (response) => {
             const url = response.url();
-            if (url.includes('/v1/auth/login')) { // Change to your API endpoint
+            if (url.includes('/v1/auth/login')) {
                 try {
-                    // Check if the response has a JSON content-type
                     const contentType = response.headers()['content-type'] || '';
                     if (!contentType.includes('application/json')) {
                         console.log(`Skipping non-JSON response from: ${url}`);
@@ -40,14 +46,14 @@ async function submitForm() {
         // Navigate to the page
         await page.goto(`https://www.mojoakijventure.com/registration?ref=${refId}`, {
             waitUntil: 'networkidle2',
-            timeout: 60000 // Increase timeout if needed
+            timeout: 60000
         });
 
         // Fill form fields
         await page.type('#name', generator.generateBengaliName());
-        await page.type('#phone', generator.generatePhoneNumber()); // Use a valid test phone number
-        await page.type('#age', generator.generateAge()); // Use a valid age
-        await page.type('#location', generator.generateBangladeshLocation()); // Use a valid location
+        await page.type('#phone', generator.generatePhoneNumber());
+        await page.type('#age', generator.generateAge());
+        await page.type('#location', generator.generateBangladeshLocation());
 
         // Click submit
         await page.click('.flex.flex-col.gap-2.items-center.mx-auto.mt-5');
@@ -57,13 +63,31 @@ async function submitForm() {
 
         console.log("Form submitted successfully");
 
-        await browser.close();
+        // Close only the page (not the browser)
+        await page.close();
+
+        // Wait for a short delay before the next submission (optional)
+        await new Promise(resolve => setTimeout(resolve, 5000));
+
+        // **Recursively call submitForm() again**
+        submitForm();
+        
     } catch (ex) {
         console.error("Error:", ex);
     }
 }
 
-const runApp = () => {
-    setInterval(submitForm, 5000);
-}
-runApp();
+// Start the process
+(async () => {
+    await initializeBrowser();
+    submitForm(); // Start first form submission
+})();
+
+// Gracefully close the browser when exiting the script
+process.on('SIGINT', async () => {
+    console.log("Closing browser...");
+    if (browser) {
+        await browser.close();
+    }
+    process.exit();
+});
