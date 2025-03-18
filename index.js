@@ -5,6 +5,7 @@ const generator = require('./helpers/data-generator');
 const refId = "ApqQB4zSKodYR5EKgHIqREheezXMWXRY";
 
 let browser; // Store the browser instance
+const MAX_PAGES = 5; // Number of concurrent form submissions
 
 async function initializeBrowser() {
     if (!browser) {
@@ -12,11 +13,12 @@ async function initializeBrowser() {
     }
 }
 
-async function submitForm() {
+async function submitForm(instance) {
     try {
         await initializeBrowser(); // Ensure browser is running
 
         const page = await browser.newPage();
+        console.log(`Starting form submission ${instance}...`);
 
         // Capture AJAX responses
         page.on('response', async (response) => {
@@ -30,12 +32,12 @@ async function submitForm() {
                     }
 
                     const jsonResponse = await response.json();
-                    console.log('Captured API Response:', jsonResponse);
+                    console.log(`Captured API Response for instance ${instance}:`, jsonResponse);
 
                     // Save successful response
                     await saveToDatabase(url, jsonResponse, null);
                 } catch (err) {
-                    console.log(`Error parsing JSON response from ${url}:`, err.message);
+                    console.log(`Error parsing JSON response for instance ${instance}:`, err.message);
 
                     // Save error message
                     await saveToDatabase(url, null, err.message);
@@ -61,26 +63,28 @@ async function submitForm() {
         // Wait for navigation to complete after form submission
         await page.waitForNavigation({ waitUntil: 'networkidle2' });
 
-        console.log("Form submitted successfully");
+        console.log(`Form submitted successfully for instance ${instance}`);
 
         // Close only the page (not the browser)
         await page.close();
-
-        // Wait for a short delay before the next submission (optional)
-        await new Promise(resolve => setTimeout(resolve, 5000));
-
-        // **Recursively call submitForm() again**
-        submitForm();
-        
     } catch (ex) {
-        console.error("Error:", ex);
+        console.error(`Error in instance ${instance}:`, ex);
     }
 }
 
-// Start the process
+// Start multiple pages at once
 (async () => {
     await initializeBrowser();
-    submitForm(); // Start first form submission
+
+    while (true) { // Infinite loop to keep submitting forms
+        console.log(`Starting ${MAX_PAGES} parallel submissions...`);
+        await Promise.all(
+            Array.from({ length: MAX_PAGES }, (_, i) => submitForm(i + 1))
+        );
+        // Optional delay before starting the next batch
+        console.log(`Waiting before starting the next batch...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    }
 })();
 
 // Gracefully close the browser when exiting the script
