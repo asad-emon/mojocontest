@@ -2,7 +2,7 @@ const puppeteer = require('puppeteer');
 const { db, saveToDatabase } = require('./helpers/db');
 const generator = require('./helpers/data-generator');
 
-const refId = "ApqQB4zSKodYR5EKgHIqREheezXMWXRY";
+const refId = process.env.REF_ID;
 
 let browser; // Store the browser instance
 const MAX_PAGES = 5; // Number of concurrent form submissions

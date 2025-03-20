@@ -12,7 +12,12 @@
   "author": "asad",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "openai": "^4.87.4",
     "puppeteer": "^24.4.0",
     "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.1"
   }
 }
