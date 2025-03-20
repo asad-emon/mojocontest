@@ -9,7 +9,7 @@ const MAX_PAGES = 5; // Number of concurrent form submissions
 
 async function initializeBrowser() {
     if (!browser) {
-        browser = await puppeteer.launch({ headless: 'new' });
+        browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: 'new' });
     }
 }
 
