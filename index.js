@@ -1,8 +1,11 @@
 const puppeteer = require('puppeteer');
 const { db, saveToDatabase } = require('./helpers/db');
 const generator = require('./helpers/data-generator');
+require('dotenv').config();
 
 const refId = process.env.REF_ID;
+console.log(refId);
+
 
 let browser; // Store the browser instance
 const MAX_PAGES = 5; // Number of concurrent form submissions
