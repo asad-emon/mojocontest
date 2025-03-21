@@ -1,7 +1,21 @@
 const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
+
+const refDBDir = './db/ref';
+
+if (!fs.existsSync(refDBDir)) {
+    fs.mkdirSync(refDBDir, { recursive: true });
+    console.log('ref db directory created!');
+} else {
+    console.log('ref db directory already exists.');
+}
+
+
+const date = new Date();
+const formattedDate = date.toLocaleDateString('de-DE');
 
 // Initialize the database
-const db = new sqlite3.Database('responses.db', (err) => {
+const db = new sqlite3.Database(`${refDBDir}/${formattedDate}.db`, (err) => {
     if (err) {
         console.error('Error opening database:', err.message);
     } else {
@@ -38,7 +52,7 @@ async function saveToDatabase(url, jsonData = null, errorMessage = null) {
 
 
 // Initialize the quiz database
-const quizdb = new sqlite3.Database('quiz.db', (err) => {
+const quizdb = new sqlite3.Database(`./db/quiz.db`, (err) => {
     if (err) {
         console.error('Error opening database:', err.message);
     } else {
